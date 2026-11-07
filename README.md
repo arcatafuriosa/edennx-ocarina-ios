@@ -2,6 +2,8 @@
 
 Experimental work toward running **The Legend of Zelda: Ocarina of Time, Switch 2 edition, on iPhone Air**, using [seedds/nxnative](https://github.com/seedds/nxnative). This is a source contribution and research repository, **not a ready-to-install game or a finished 30 fps release**.
 
+Technical focus: **Nintendo Switch 2 / NVIDIA Ampere shader translation through SPIR-V to Apple Metal**, native runtime adaptation, GPU rendering correctness and frame pacing on **iOS and Apple Silicon**.
+
 **Status: 7 November 2026.** The game has run on a physical iPhone, including exterior gameplay in Kokiri Forest. Sustained smoothness and intermittent rendering flashes remain unresolved.
 
 ## What works, and what remains
