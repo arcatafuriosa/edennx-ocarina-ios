@@ -2042,7 +2042,7 @@ index 98e8c7d..b3e2149 100644
  class Pokopia(Translated):
      """Pokemon Pokopia's encodings, on the register the atomic reads: F2FP.MERGE_C (22,886 shaders), F2I from a half (1,067), MEMBAR with ERRBAR (144)"""
 diff --git a/dm/gfx/tests/test_dmsh_meshstage.py b/dm/gfx/tests/test_dmsh_meshstage.py
-index 81f8d81..83d2742 100644
+index 81f8d81..1579c39 100644
 --- a/dm/gfx/tests/test_dmsh_meshstage.py
 +++ b/dm/gfx/tests/test_dmsh_meshstage.py
 @@ -69,6 +69,24 @@ class Facts(unittest.TestCase):
@@ -2070,8 +2070,48 @@ index 81f8d81..83d2742 100644
      def test_largest_of_the_game_fits_metal(self):   # c34e01565dac1124: 256 vertices, 192 primitives
          i = ms.info(control(7, max_v=256, max_p=192), sph(0xf0, b'\x00\x0f'))
          self.assertLessEqual(ms.memory(i)[1], ms.METAL_MAX_SHARED)
+@@ -262,6 +280,39 @@ fragment main0_out main0(main0_in in [[stage_in]])
+ """)
+         self.assertEqual(mask, 1)
+ 
++    def test_value_initialized_register_does_not_change_mixed_targets(self):
++        source = """struct main0_out
++{
++    float4 m_48 [[color(0)]];
++    float4 m_50 [[color(1)]];
++};
++fragment main0_out main0(main0_in in [[stage_in]])
++{
++    main0_out out = {};
++    float _10 = in.m_1.x;
++    int _20 = %s;
++    int _21 = %s;
++    if (_10 > 0.0)
++    {
++        _20 = as_type<int>(_10);
++        _21 = 64;
++    }
++    else
++    {
++        _20 = as_type<int>(_10);
++        _21 = as_type<int>(_10);
++    }
++    out.m_48.x = as_type<float>(_20);
++    out.m_50.x = as_type<float>(_21);
++    return out;
++}
++"""
++        for zero in ('0', '{}', '{ }'):
++            with self.subTest(initializer=zero):
++                src, mask = self.fs_uint(source % (zero, zero))
++                self.assertEqual(mask, 1 << 1)
++                self.assertIn('fragment main0_out_m main0_m(', src)
++
+     def test_smooth_input_gets_none(self):
+         self.assertIsNone(self.fs_uint(self.SRC % ('', '_26'))[0])
+ 
 diff --git a/dm/gfx/tools/dmsh_build.py b/dm/gfx/tools/dmsh_build.py
-index a41265d..f03b391 100644
+index a41265d..304a5d5 100644
 --- a/dm/gfx/tools/dmsh_build.py
 +++ b/dm/gfx/tools/dmsh_build.py
 @@ -45,7 +45,11 @@ BF_WANT_FILE = str(GAME.table('bf_want.tsv'))
@@ -2087,6 +2127,16 @@ index a41265d..f03b391 100644
  # spirv-cross writes the translator's FMin / FMax / FClamp as fast::min / max / clamp, whose result for a NaN operand is the GPU's choice; Maxwell's FMNMX returns the other operand
  # and its saturation gives 0, as Metal's precise:: functions (IEEE fmin / fmax) do on every GPU. The M4 Pro's fast ones happen to agree, an A20 Pro's do not: Super Mario Galaxy 2's
  # GX lighting takes max(0, NaN) from light directions left at zero, and the half of Mario its fill light faces came out white on the iPhone (GitHub issue 72; vk_shaders.py PRECISE)
+@@ -1214,6 +1218,9 @@ def int_outputs(src, body, cols):
+     defs = collections.defaultdict(list)
+     for v, e in re.findall(r'^\s*(?:(?:u?int\d?|float\d?|bool)\s+)?(_\d+)\s*=\s*([^;]+);', body, re.M): defs[v].append(e.strip())
+     def kinds(e, seen):
++        # SPIRV-Cross value-initializes temporaries with {}. Like literal zero,
++        # that bit pattern carries no evidence of an integer colour target.
++        if re.fullmatch(r'\{\s*\}', e): return set()
+         if re.fullmatch(r'_\d+', e):
+             if types.get(e, '').startswith('float'): return {'float'}
+             if e in seen: return set()
 diff --git a/dm/gfx/tools/dmsh_meshstage.py b/dm/gfx/tools/dmsh_meshstage.py
 index 359a913..ab7bb59 100644
 --- a/dm/gfx/tools/dmsh_meshstage.py
@@ -2601,9 +2651,18 @@ index c936ba5..fde6f4b 100644
  
  - **Symptom:** the whole picture came out darker and more saturated on the Mac and the iPhone: comparing with a Switch screenshot, every channel at every level equalled the Switch value decoded from sRGB once more (0.55 → 0.26, 0.75 → 0.52).
 diff --git a/docs/reference/shaders.md b/docs/reference/shaders.md
-index f482815..ef8c69a 100644
+index f482815..9ef8e96 100644
 --- a/docs/reference/shaders.md
 +++ b/docs/reference/shaders.md
+@@ -735,7 +735,7 @@ Finding, keying and translating shaders (`dm/gfx/tools/shader_split.py`, `dmsh_b
+ 
+ - **Symptom:** a deferred scene with part of its materials unlit or black: grass, ground and trees dark while wood and characters look right, whole areas of a map black. There may be no red line. A texture dump shows an integer G-buffer target (`fmt=73`, RGBA8Uint) holding only zeros, and the lighting pass reads it. Since this entry, `[RED] shader … writes colour target …, an integer format, as a float`.
+ - **Cause:** `main0_m` returned as integers every output written through `as_type<float>`, and the host takes it only when the pipeline's integer attachments are exactly those. The translator keeps registers in integer locals, so a plain float colour reaches its output the same way. Kirby Star Allies' G-buffer is RGBA16F, RGBA8 sRGB, RGBA8Uint, RG11B10F: 283 of its pixel shaders got the mask 0b111 and 8 got 0b101, and 396 got no `main0_m` at all, as all four outputs looked integer. They kept `main0`, whose float output met the integer attachment. A pipeline built on its own is refused for that, but one specialized from a Metal 4 base is not: it was built without an error and the target stayed zero.
+-- **Fix:** `dmsh_build.py` `int_outputs` follows each output write back through the locals: a computed integer or a small constant counts as integer, the bits of a computed float as float, and zero, the bits of a float constant and words copied from a uniform or an input say nothing. A choice (`c ? a : b`) is what its two values are, and a denormal float literal is a small integer printed through the output's type. `main0_m` returns the outputs with integers and no float bits; when none is that clean, those with integers; when none has any, every output written through integer bits, as before. The pipeline path now prints the red line above when a shader has integer entry points and none fits.
++- **Fix:** `dmsh_build.py` `int_outputs` follows each output write back through the locals: a computed integer or a small constant counts as integer, the bits of a computed float as float, and zero, the bits of a float constant and words copied from a uniform or an input say nothing. A choice (`c ? a : b`) is what its two values are, and a denormal float literal is a small integer printed through the output's type. Empty braced value-initialization (`{}`) is also zero and supplies no integer-format evidence; otherwise initializing a reused register can hide the mixed entry point. `main0_m` returns the outputs with integers and no float bits; when none is that clean, those with integers; when none has any, every output written through integer bits, as before. The pipeline path now prints the red line above when a shader has integer entry points and none fits.
+ - **Found on:** [Kirby Star Allies](../../dm/games/01007E3006DDA000/README.md): 687 pixel shaders got the right mask, 0b100.
+ - **Note:** this only chooses among the entry points. A shader whose integer output cannot be told apart still has no entry point for its pipeline, which the red line names.
+ 
 @@ -1958,3 +1958,27 @@ Finding, keying and translating shaders (`dm/gfx/tools/shader_split.py`, `dmsh_b
  - **Check:** `t_host_msl` loads every library, with a swizzled `newLibraryWithSource:` that counts 0 calls, and finds all 24 clear functions. `t_builtin`, `t_geometry` and `t_deswz_gpu` use the built libraries.
  - **Build inputs:** Mac libraries use `MACOS_MIN` from `dm/mac/min_os.mk`, matching the host's deployment target; otherwise a newer SDK emits libraries older supported Macs cannot load and the host falls back to runtime compilation. Every build rechecks the compiler, SDK, deployment target and source contents, reusing the header only when all match. Installing the Metal toolchain after a source-only build therefore regenerates the libraries without a clean build.

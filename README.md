@@ -23,7 +23,7 @@ These are observations from limited local tests, not a general compatibility or 
 
 The last installed local chain, `53eff8fc562a`, includes work on Metal end barriers, compatible depth-image storage reuse, mesh primitive-index bounds and LDSM subgroup synchronization. Its complete shader build retained **42,845 previously available primary keys**. Nine earlier failures remained out of 42,854 captures; this is not a claim that all shaders compile.
 
-A newer local candidate, `f14457ae7de2`, uses SPIRV-Cross's zero-initialization option after a compile audit found potentially uninitialized MSL booleans in seven active shaders, mostly vegetation. Synthetic tests and targeted shader checks support the language-boundary correction. **The full rebuild was still running at this export; this candidate was not installed, and its effect on the flashes or phone performance was not validated.** A synthetic test passing does not prove the cause of the in-game flashes.
+The zero-initialization candidate `f14457ae7de2` completed with all 42,845 primary keys, but acceptance rejected one lost mixed float/integer fragment-output entry. The classifier had mistaken an empty braced zero initializer for integer-format evidence. This source export now treats it like literal zero and includes a regression that fails before the correction. The replacement local chain **`5fb5cc699875` is rebuilding from the retained cache and is not installed or accepted on the phone**. The last installed chain remains `53eff8fc562a`; flashes and sustained 30 fps remain unresolved.
 
 The source export also carries earlier ports already present in the working tree. Not every change is new to this experiment or individually established as a performance improvement.
 

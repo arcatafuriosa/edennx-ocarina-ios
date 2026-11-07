@@ -280,6 +280,39 @@ fragment main0_out main0(main0_in in [[stage_in]])
 """)
         self.assertEqual(mask, 1)
 
+    def test_value_initialized_register_does_not_change_mixed_targets(self):
+        source = """struct main0_out
+{
+    float4 m_48 [[color(0)]];
+    float4 m_50 [[color(1)]];
+};
+fragment main0_out main0(main0_in in [[stage_in]])
+{
+    main0_out out = {};
+    float _10 = in.m_1.x;
+    int _20 = %s;
+    int _21 = %s;
+    if (_10 > 0.0)
+    {
+        _20 = as_type<int>(_10);
+        _21 = 64;
+    }
+    else
+    {
+        _20 = as_type<int>(_10);
+        _21 = as_type<int>(_10);
+    }
+    out.m_48.x = as_type<float>(_20);
+    out.m_50.x = as_type<float>(_21);
+    return out;
+}
+"""
+        for zero in ('0', '{}', '{ }'):
+            with self.subTest(initializer=zero):
+                src, mask = self.fs_uint(source % (zero, zero))
+                self.assertEqual(mask, 1 << 1)
+                self.assertIn('fragment main0_out_m main0_m(', src)
+
     def test_smooth_input_gets_none(self):
         self.assertIsNone(self.fs_uint(self.SRC % ('', '_26'))[0])
 

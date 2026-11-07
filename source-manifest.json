@@ -57,5 +57,6 @@
     "scripts/push_romfs_parts.py"
   ],
   "excluded": "private reports/configs/raw logs/saves/game data; generated translator binaries, fingerprints and chain header",
-  "patch_sha256": "b533c9e3f0634743e6d47bcf7f982b45ae7a3005a22e7b45a5e1c3ce9e093902"
+  "patch_sha256": "d842535d606baa774a8bd6b43a912ed2c735d6d7c583a26790b483aad37e0713",
+  "local_candidate_chain": "5fb5cc699875"
 }

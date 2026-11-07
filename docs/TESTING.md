@@ -21,3 +21,15 @@ These results concern the local development tree from which the source delta was
 The measured presentation run retained a two-texture ring and removed heavy readback/stack diagnostics. Comparing its pacing with an earlier run changes both instrumentation and launch conditions, so the entire difference cannot be attributed to buffering alone. White flashes still occurred.
 
 Publication checks verify only the exported files, absence of disallowed material and patch applicability. They do not replace upstream regression testing or visual playtesting.
+
+## Mixed-output acceptance follow-up
+
+The first full initialization build completed with the expected keys and no
+missing library files. Reflection comparison caught a lost mixed-target entry
+in one shader, so that candidate was rejected before installation. Empty braced
+initialization is now neutral in integer-output inference, matching literal
+zero. The synthetic test fails for `{}` and `{ }` before the fix and passes
+afterward. Thirty shader tests including Metal compilation, 28 chain/document
+tests and the Python lint ratchet pass; a focused independent review reports
+no actionable finding. Replacement chain `5fb5cc699875` still requires its full
+build, reflection/variant acceptance and device tests.

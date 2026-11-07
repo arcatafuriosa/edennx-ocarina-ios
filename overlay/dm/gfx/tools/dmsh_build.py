@@ -1218,6 +1218,9 @@ def int_outputs(src, body, cols):
     defs = collections.defaultdict(list)
     for v, e in re.findall(r'^\s*(?:(?:u?int\d?|float\d?|bool)\s+)?(_\d+)\s*=\s*([^;]+);', body, re.M): defs[v].append(e.strip())
     def kinds(e, seen):
+        # SPIRV-Cross value-initializes temporaries with {}. Like literal zero,
+        # that bit pattern carries no evidence of an integer colour target.
+        if re.fullmatch(r'\{\s*\}', e): return set()
         if re.fullmatch(r'_\d+', e):
             if types.get(e, '').startswith('float'): return {'float'}
             if e in seen: return set()
