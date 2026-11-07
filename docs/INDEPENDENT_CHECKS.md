@@ -17,3 +17,21 @@ The audit identifies one active tensor shader in the examined capture: 192 HMMA 
 The bench has explicit limitations: some Apple matrix load/store/rounding assumptions and PTX fragment references were not independently verified against their specifications by the investigator. The fallback mirror does not execute C#. Passing these tests is conditional model evidence, not complete hardware conformance or phone rendering acceptance.
 
 A modeled half-precision overflow case motivates checking non-finite outputs in an isolated replay. No NaN/inf corruption was observed in the actual game by this investigation, and no such correction has been applied. A float32 comparison would be an experiment for the captured inputs, not a demonstrated fix or a general falsification across all scenes.
+
+## Specification audit follow-up
+
+A later audit verified PTX fragment layouts and the FP16 precision restrictions
+against [NVIDIA PTX ISA 9.5](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-instructions-mma).
+FP16 accumulation does not prescribe a unique rounding order or mode. Apple
+matrix load/store origin and accumulation hypotheses still require targeted
+hardware checks. The [Metal language specification](https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf)
+distinguishes fast and relaxed math; microtests must record and compare both.
+
+The revised CPU oracle initially still used a nearest-rounding error unit.
+Review reproduced two false rejections with finite directed-rounding models.
+An isolated review copy uses a wider, error-propagating envelope with explicit
+finite-normal IEEE assumptions; it is not a universal PTX/SASS conformance
+criterion. Six specification tests, two directed-rounding regressions, twelve
+HMMA tests and four mirror tests passed in that copy. Exact layout checks and
+conditional overflow/subnormal observations remain separate. No production
+shader, runtime or device configuration was changed from these results.
