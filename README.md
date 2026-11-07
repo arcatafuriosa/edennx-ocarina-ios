@@ -9,7 +9,7 @@ Experimental work toward running **The Legend of Zelda: Ocarina of Time, Switch 
 | Area | Observed state |
 |---|---|
 | Boot and gameplay | Menu, save loading, interiors and exterior gameplay reached on the tested iPhone |
-| French | App/game language configuration exercised in French |
+| French | Game language configured and exercised in French |
 | Frame-rate controller | Build-gated native 30 fps stepping integrated; brief 30 fps exterior windows observed at normal game speed |
 | Sustained performance | One prolonged post-warmup run: **23.39 displayed fps over 16,460 frames**, GPU median **36.122 ms**, displayed interval p95 **66.691 ms**, p99 **100.036 ms** |
 | White flashes | Still present, reported first on foreground vegetation and later across the scene; HUD remains readable |
@@ -35,6 +35,7 @@ The source export also carries earlier ports already present in the working tree
 - `config/iphone.env.example`: portable example without device IDs, signing identity or local paths.
 - [BUILDING.md](BUILDING.md): how to apply sources and rebuild a consistent translator/shader chain.
 - [docs/TESTING.md](docs/TESTING.md): checks performed and known gaps.
+- [docs/INDEPENDENT_CHECKS.md](docs/INDEPENDENT_CHECKS.md): reviewed video/CPU investigations and their limits.
 - `tools/check_public_export.py`: checks the publication boundary; no game needed.
 
 **No ROM/package, Nintendo executable, firmware, decryption key, save, game shader library, proprietary game asset, GPU capture, signed app, certificate or provisioning profile is supplied.** Private logs, videos, screenshots, machine paths, device identifiers and signing settings are not included. Each developer must independently supply data they are authorized to use; do not open issues or pull requests containing those files.

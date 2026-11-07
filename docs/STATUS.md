@@ -3,7 +3,7 @@
 1. Finish the full initialization-candidate shader reconstruction, compare exact keys and finalized reflection, and verify matching library, host, constant-extent tables and archive stamps.
 2. Test that candidate in the same exterior scene, both immediately and over a longer run. Obtain visual evidence for the foreground plant and full-scene flashes. Keep a rollback; compare performance before adoption.
 3. Reach sustained 30 displayed fps with normal game speed, recording long-frame tails and thermal conditions. The prolonged reference remains 23.39 displayed fps.
-4. Complete independent synthetic Ampere coverage and a VFR-aware video flash detector. Those investigations were still in progress at this export.
+4. Review the delivered independent CPU Ampere bench and VFR video detector. Their reports provide useful coverage and three major flash events, but the HMMA oracle relies on unverified architectural assumptions and image changes only estimate presentation cadence. Neither establishes a GPU root cause.
 5. Restore a fully executable graphics test suite and obtain broader regression evidence before describing the work as validated generally.
 6. Evaluate real wider-aspect rendering and HUD support after correctness/performance; stretching or cropping the existing 16:9 image does not satisfy the fullscreen request.
 
