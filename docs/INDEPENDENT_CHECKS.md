@@ -56,3 +56,25 @@ The proposed real-input capture plan requires revision against actual runtime
 reflection, binding namespaces and GPU-ordered readback. Existing local capture
 resources have not yet yielded verified dispatch inputs from a flash. No new
 production shader or capture hook was introduced from this experiment.
+
+## Extended M4 fixtures and CPU-model calibration
+
+A follow-up used 658 synthetic fixtures, separate input cases in all four
+SIMD-groups, raw-bit CPU classification and explicit fast/relaxed builds.
+Archived outputs were rechecked on the CPU: 588 exact cases agreed, 65 cases
+met the conditional numerical envelope and four special-range cases met their
+recorded criteria. Fast and relaxed outputs matched bit for bit on this set.
+Origin/transpose probes select source-coordinate origins applied before
+transposition on the tested M4/toolchain; portability still requires checking.
+
+The deployed path returned 1024 for the fixture 1024 + 16 x 0.5; the comparison
+returned 1032. The old CPU assumption of rounding only after each eight-term
+block fails this case. A separately named observed-M4 sequential-rounding
+model reproduces all 65 archived numerical cases. Two calibration regressions
+failed before the model addition and passed afterward. This fits these observed
+outputs; it does not uniquely establish a universal internal accumulation order.
+
+Ten non-finite outputs in the deployed fixture run include explicitly injected
+special-value cases; they are not game observations. No production shader was
+changed, no iPhone execution was performed, and real dispatch inputs and a
+link to the flashes remain unestablished.
