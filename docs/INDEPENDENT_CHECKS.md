@@ -35,3 +35,24 @@ criterion. Six specification tests, two directed-rounding regressions, twelve
 HMMA tests and four mirror tests passed in that copy. Exact layout checks and
 conditional overflow/subnormal observations remain separate. No production
 shader, runtime or device configuration was changed from these results.
+
+## Isolated Metal hardware follow-up
+
+The actual template hash was checked against the active source. An isolated
+Apple M4 experiment was reproduced in explicit fast and relaxed modes with
+small synthetic buffers. Exact layout/integer cases agreed. For a constructed
++80000 partial sum followed by -80000, the half-result path produced+Inf and the
+float32-accumulator comparison produced 0 in both modes. This is a local observed
+precision difference, not a game defect or a demonstrated flash cause.
+
+Review corrected the chain experiment: its two variants originally shared the
+half accumulator on subsequent steps. With independent four-step recurrences,
+all 32,768 scalar outputs per variant remained finite and the maximum difference
+was 0.0068359375. The workload is 256 matrices of 16 x 8 per scenario, not 32,768 matrices.
+Special-value observations are not a general IEEE conformance claim, and no
+phone-performance conclusion is drawn.
+
+The proposed real-input capture plan requires revision against actual runtime
+reflection, binding namespaces and GPU-ordered readback. Existing local capture
+resources have not yet yielded verified dispatch inputs from a flash. No new
+production shader or capture hook was introduced from this experiment.
