@@ -78,3 +78,42 @@ Ten non-finite outputs in the deployed fixture run include explicitly injected
 special-value cases; they are not game observations. No production shader was
 changed, no iPhone execution was performed, and real dispatch inputs and a
 link to the flashes remain unestablished.
+
+
+## Frame pacing analysis and recommendation review
+
+A separate standard-library CPU analyzer reproduced the prolonged baseline:
+23.39 displayed fps over 16,451 valid intervals totaling 703.249 seconds. Its
+six synthetic tests passed. Intervals cluster near 33.345 ms (73.83%) and
+66.691 ms (24.50%); averaging instantaneous fps would misleadingly give 26.01.
+These are observed distributions, not a causal diagnosis of each missed refresh.
+
+Additional review probes expose limitations outside that baseline: short-session
+resets can merge runs; non-finite input is not rejected; the clock tolerance
+argument is unused; and short windows divide by a full 60 seconds of unobserved
+coverage. The baseline remains reproduced, but the analyzer is not yet validated
+for arbitrary streams or partial windows.
+
+The three-texture snapshot setting exists and is eligible for a separate A/B
+trial. Claimed fps, CPU scheduling and shadow-pass savings remain unmeasured.
+An 8 ms real-time declaration is not justified for a thread consuming about
+22 ms, and the profiled 128 x 128 render target has not been established as a
+shadow map. No scheduling change or pass suppression was adopted from these
+recommendations.
+
+
+## Existing GPU capture: scope of real-input evidence
+
+A CPU-only inspector traced a byte-identical reference library through inferred
+capture records to its function and pipeline. Re-running it found no references
+to those objects in the decoded command streams. Its 18 synthetic parser tests
+passed; they do not validate Apple's undocumented capture format. No verified
+real-input replay of the target pipeline is available from this inspection.
+
+The decoded image contains 14 compute dispatches using 11 other pipeline
+objects. This is narrower than proving the absence of every compilation or
+variant of the shader: some used libraries remain inside an undecoded packed
+index/store representation. Function names and threadgroup size alone are
+insufficient identifiers. Future replay would require proven dispatch identity,
+resource state and dependencies, and reconstruction of argument-buffer handles
+in the replay process. No new capture hook or production change was introduced.
