@@ -1,0 +1,7 @@
+{
+  "base": "b4318c7a4d0bcbd16e7873ce63f33d344d1acbfb",
+  "patch_applies": true,
+  "compared_source_files": 51,
+  "mismatches": [],
+  "scope": "patch applicability and exact source reconstruction, not a build or device test"
+}
